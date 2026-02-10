@@ -1,0 +1,298 @@
+{
+  "name": "Space Website Scraper",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "sites_to_check",
+              "value": 10
+            }
+          ],
+          "boolean": [
+            {
+              "name": "follow_local_links",
+              "value": false
+            },
+            {
+              "name": "follow_links_depth",
+              "value": 1
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-parameters",
+      "name": "Set Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// List of all space websites to scrape\nconst websites = [\n  // Official Space Agencies\n  { url: 'https://www.nasa.gov', category: 'agency', name: 'NASA' },\n  { url: 'https://www.esa.int', category: 'agency', name: 'ESA' },\n  { url: 'https://global.jaxa.jp', category: 'agency', name: 'JAXA' },\n  { url: 'https://www.roscosmos.ru/en/', category: 'agency', name: 'Roscosmos' },\n  { url: 'https://www.isro.gov.in', category: 'agency', name: 'ISRO' },\n  { url: 'http://www.cnsa.gov.cn/english/', category: 'agency', name: 'CNSA' },\n  { url: 'https://www.asc-csa.gc.ca/eng/', category: 'agency', name: 'CSA' },\n  \n  // Launch Schedules & Tracking\n  { url: 'https://spaceflightnow.com', category: 'launches', name: 'SpaceflightNow' },\n  { url: 'https://nextspaceflight.com', category: 'launches', name: 'NextSpaceflight' },\n  { url: 'https://www.spacelaunchschedule.com', category: 'launches', name: 'Space Launch Schedule' },\n  { url: 'https://www.spaceflightinsider.com', category: 'launches', name: 'Spaceflight Insider' },\n  \n  // Mission & Project Information\n  { url: 'https://www.nasa.gov/missions/', category: 'missions', name: 'NASA Missions' },\n  { url: 'https://www.planetary.org', category: 'missions', name: 'Planetary Society' },\n  { url: 'https://www.nasaspaceflight.com', category: 'missions', name: 'NASA Spaceflight' },\n  { url: 'https://www.space.com', category: 'missions', name: 'Space.com' },\n  \n  // Astronaut Information\n  { url: 'https://www.nasa.gov/astronauts/', category: 'astronauts', name: 'NASA Astronauts' },\n  { url: 'http://www.astronautix.com', category: 'astronauts', name: 'Astronaut Database' },\n  { url: 'https://www.spacefacts.de', category: 'astronauts', name: 'Spacefacts' },\n  \n  // Budget & Management\n  { url: 'https://www.nasa.gov/news/budget/', category: 'budget', name: 'NASA Budget' },\n  { url: 'https://www.planetary.org/space-policy', category: 'budget', name: 'Planetary Society Policy' },\n  { url: 'https://oig.nasa.gov', category: 'budget', name: 'NASA OIG' },\n  { url: 'https://www.cbo.gov', category: 'budget', name: 'CBO' },\n  \n  // Commercial Space\n  { url: 'https://www.spacex.com', category: 'commercial', name: 'SpaceX' },\n  { url: 'https://www.blueorigin.com', category: 'commercial', name: 'Blue Origin' },\n  { url: 'https://www.rocketlabusa.com', category: 'commercial', name: 'Rocket Lab' },\n  { url: 'http://www.parabolicarc.com', category: 'commercial', name: 'Parabolic Arc' },\n  \n  // Technical Data\n  { url: 'https://planet4589.org/space/', category: 'technical', name: 'Jonathan\\'s Space Report' },\n  { url: 'https://space.skyrocket.de', category: 'technical', name: 'Gunter\\'s Space Page' },\n  { url: 'https://www.space-track.org', category: 'technical', name: 'Space-Track' },\n  { url: 'https://ntrs.nasa.gov', category: 'technical', name: 'NASA Technical Reports' },\n  \n  // News & Analysis\n  { url: 'https://spacenews.com', category: 'news', name: 'SpaceNews' },\n  { url: 'https://www.thespacereview.com', category: 'news', name: 'The Space Review' },\n  { url: 'https://arstechnica.com/space/', category: 'news', name: 'Ars Technica Space' },\n  { url: 'https://www.sciencealert.com/space', category: 'news', name: 'ScienceAlert Space' },\n  \n  // Data & Visualization\n  { url: 'https://eyes.nasa.gov', category: 'visualization', name: 'NASA Eyes' },\n  { url: 'https://celestrak.org', category: 'visualization', name: 'Celestrak' },\n  { url: 'https://www.n2yo.com', category: 'visualization', name: 'N2YO' },\n  { url: 'https://spotthestation.nasa.gov', category: 'visualization', name: 'ISS Tracker' }\n];\n\n// Get the number of sites to check from input\nconst sitesToCheck = $input.first().json.sites_to_check || 10;\n\n// Limit to specified number of sites\nconst selectedSites = websites.slice(0, sitesToCheck);\n\n// Return as separate items for processing\nreturn selectedSites.map(site => ({ json: site }));"
+      },
+      "id": "load-websites",
+      "name": "Load Websites",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          }
+        }
+      },
+      "id": "fetch-page",
+      "name": "Fetch Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst item = $input.item;\nconst html = item.binary?.data ? Buffer.from(item.binary.data.data).toString('utf8') : item.json.data;\n\n// Extract metadata\nconst titleMatch = html.match(/<title[^>]*>([^<]+)<\\/title>/i);\nconst title = titleMatch ? titleMatch[1].trim() : '';\n\n// Extract meta tags\nconst metaTags = {};\nconst metaRegex = /<meta\\s+([^>]+)>/gi;\nlet match;\nwhile ((match = metaRegex.exec(html)) !== null) {\n  const attrs = match[1];\n  const nameMatch = attrs.match(/(?:name|property)=[\"']([^\"']+)[\"']/i);\n  const contentMatch = attrs.match(/content=[\"']([^\"']+)[\"']/i);\n  if (nameMatch && contentMatch) {\n    metaTags[nameMatch[1]] = contentMatch[1];\n  }\n}\n\n// Extract keywords from meta tags and content\nconst keywords = [];\nif (metaTags.keywords) {\n  keywords.push(...metaTags.keywords.split(',').map(k => k.trim()));\n}\n\n// Extract common space-related keywords from content\nconst spaceKeywords = [\n  'launch', 'mission', 'rocket', 'satellite', 'astronaut', 'space station',\n  'mars', 'moon', 'ISS', 'orbit', 'NASA', 'SpaceX', 'crew', 'payload',\n  'telescope', 'galaxy', 'planet', 'spacecraft', 'rover', 'exploration'\n];\n\nspaceKeywords.forEach(keyword => {\n  const regex = new RegExp(keyword, 'gi');\n  const matches = html.match(regex);\n  if (matches && matches.length > 2) {\n    keywords.push(keyword);\n  }\n});\n\n// Extract local links\nconst localLinks = [];\nconst linkRegex = /<a\\s+[^>]*href=[\"']([^\"']+)[\"'][^>]*>/gi;\nconst baseUrl = item.json.url;\nconst urlObj = new URL(baseUrl);\n\nwhile ((match = linkRegex.exec(html)) !== null) {\n  const href = match[1];\n  try {\n    // Check if it's a relative or same-domain link\n    if (href.startsWith('/')) {\n      localLinks.push(urlObj.origin + href);\n    } else if (href.startsWith(urlObj.origin)) {\n      localLinks.push(href);\n    } else if (!href.startsWith('http')) {\n      // Relative path\n      const fullUrl = new URL(href, baseUrl).href;\n      if (fullUrl.startsWith(urlObj.origin)) {\n        localLinks.push(fullUrl);\n      }\n    }\n  } catch (e) {\n    // Invalid URL, skip\n  }\n}\n\n// Remove duplicates\nconst uniqueLinks = [...new Set(localLinks)];\n\n// Calculate content hash for change detection\nconst contentHash = crypto.createHash('sha256').update(html).digest('hex');\n\n// Get text content (simplified)\nconst textContent = html\n  .replace(/<script[^>]*>.*?<\\/script>/gis, '')\n  .replace(/<style[^>]*>.*?<\\/style>/gis, '')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .substring(0, 5000); // Limit to first 5000 chars\n\nreturn {\n  json: {\n    url: item.json.url,\n    site_name: item.json.name,\n    category: item.json.category,\n    collection_timestamp: new Date().toISOString(),\n    title: title,\n    description: metaTags.description || '',\n    meta_tags: metaTags,\n    keywords: [...new Set(keywords)],\n    content_hash: contentHash,\n    content_length: html.length,\n    text_preview: textContent.substring(0, 500),\n    local_links_count: uniqueLinks.length,\n    local_links: uniqueLinks.slice(0, 50), // Store up to 50 links\n    status_code: 200,\n    follow_links_flag: $('Set Parameters').first().json.follow_local_links\n  }\n};"
+      },
+      "id": "extract-content",
+      "name": "Extract Content & Metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS space_content (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  url TEXT NOT NULL,\n  site_name TEXT,\n  category TEXT,\n  collection_timestamp TEXT NOT NULL,\n  title TEXT,\n  description TEXT,\n  meta_tags TEXT,\n  keywords TEXT,\n  content_hash TEXT NOT NULL,\n  content_length INTEGER,\n  text_preview TEXT,\n  local_links_count INTEGER,\n  local_links TEXT,\n  status_code INTEGER,\n  created_at DATETIME DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE INDEX IF NOT EXISTS idx_url ON space_content(url);\nCREATE INDEX IF NOT EXISTS idx_hash ON space_content(content_hash);\nCREATE INDEX IF NOT EXISTS idx_timestamp ON space_content(collection_timestamp);",
+        "options": {}
+      },
+      "id": "create-table",
+      "name": "Create Table (SQLite)",
+      "type": "n8n-nodes-base.sqlite",
+      "typeVersion": 1,
+      "position": [450, 500],
+      "credentials": {
+        "sqlite": {
+          "id": "1",
+          "name": "Local SQLite DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "space_content",
+        "columns": "url,site_name,category,collection_timestamp,title,description,meta_tags,keywords,content_hash,content_length,text_preview,local_links_count,local_links,status_code",
+        "options": {}
+      },
+      "id": "insert-data",
+      "name": "Insert to Database",
+      "type": "n8n-nodes-base.sqlite",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "credentials": {
+        "sqlite": {
+          "id": "1",
+          "name": "Local SQLite DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.follow_links_flag }}",
+              "value2": true
+            },
+            {
+              "value1": "={{ $json.local_links_count > 0 }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-follow-links",
+      "name": "Should Follow Links?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get local links from the page\nconst localLinks = $input.first().json.local_links || [];\nconst siteName = $input.first().json.site_name;\nconst category = $input.first().json.category;\n\n// Return links as separate items for processing\nreturn localLinks.slice(0, 10).map(link => ({\n  json: {\n    url: link,\n    name: `${siteName} - Link`,\n    category: category\n  }\n}));"
+      },
+      "id": "prepare-links",
+      "name": "Prepare Local Links",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT content_hash, collection_timestamp \nFROM space_content \nWHERE url = '{{ $json.url }}' \nORDER BY collection_timestamp DESC \nLIMIT 1",
+        "options": {}
+      },
+      "id": "check-existing",
+      "name": "Check if Changed",
+      "type": "n8n-nodes-base.sqlite",
+      "typeVersion": 1,
+      "position": [1250, 500],
+      "credentials": {
+        "sqlite": {
+          "id": "1",
+          "name": "Local SQLite DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const currentData = $input.first().json;\nconst previousData = $('Check if Changed').first()?.json;\n\nif (!previousData) {\n  return {\n    json: {\n      ...currentData,\n      change_status: 'new',\n      change_detected: true\n    }\n  };\n}\n\nconst hasChanged = currentData.content_hash !== previousData.content_hash;\n\nreturn {\n  json: {\n    ...currentData,\n    change_status: hasChanged ? 'modified' : 'unchanged',\n    change_detected: hasChanged,\n    previous_hash: previousData.content_hash,\n    previous_collection: previousData.collection_timestamp\n  }\n};"
+      },
+      "id": "compare-changes",
+      "name": "Compare Changes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 650]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Parameters": {
+      "main": [
+        [
+          {
+            "node": "Create Table (SQLite)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Load Websites",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Websites": {
+      "main": [
+        [
+          {
+            "node": "Fetch Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Page": {
+      "main": [
+        [
+          {
+            "node": "Extract Content & Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Content & Metadata": {
+      "main": [
+        [
+          {
+            "node": "Check if Changed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Changed": {
+      "main": [
+        [
+          {
+            "node": "Compare Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare Changes": {
+      "main": [
+        [
+          {
+            "node": "Insert to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert to Database": {
+      "main": [
+        [
+          {
+            "node": "Should Follow Links?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Follow Links?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Local Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Local Links": {
+      "main": [
+        [
+          {
+            "node": "Fetch Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

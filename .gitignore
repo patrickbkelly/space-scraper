@@ -1,0 +1,59 @@
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.sql.backup
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+config.local.json
+
+# Credentials
+*credentials*.json
+*secrets*.json
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Node modules (if using n8n locally)
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+ENV/
+
+# Backup files
+*.bak
+*~
